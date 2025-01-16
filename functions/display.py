@@ -22,11 +22,11 @@ def rev_color_grid(df, thresholds):
             if pd.notnull(value):  # If the value is not NaN
                 if value == 0:
                     color_criteria[i, j] = 0 # Grey
-                elif value >= (row_threshold * 1.2):  # Greater than 20% above the row mean
+                elif value >= (row_threshold * 1.3):  # Greater than 20% above the row mean
                     color_criteria[i, j] = 2  # Green
-                elif value <= (row_threshold * 0.8):  # Less than 20% below the row mean
+                elif value <= row_threshold:  # Less than 20% below the row mean
                     color_criteria[i, j] = -2  # Red
-                else:  # Between -20% and +20% of the row mean
+                elif (value > row_threshold) and (value < row_threshold*1.3):
                     color_criteria[i, j] = 1  # Yellow
             else:
                 color_criteria[i, j] = 0  # Leave NaN as 0 for transparent
@@ -57,8 +57,8 @@ def occ_color_grid(df):
 
     return color_criteria
 
-def display_table(mode='Revenue', year=2022, owner='all'):
-    '''Displays the table colored as an image'''
+def create_yearly_overview(mode='Revenue', year=2022, owner='all'):
+    '''Creates yearly overvew'''
     if (owner=='Mohamed') | (owner=='Mounia'):
         full_df = full_df[full_df['Owner']==owner]
 
@@ -66,11 +66,16 @@ def display_table(mode='Revenue', year=2022, owner='all'):
 
     #Select only data for the selected year
     selected_time_range = full_pivot.columns[full_pivot.columns.year == year]
-    df = full_pivot[selected_time_range].round(0).astype(int)
+    yearly_overview = full_pivot[selected_time_range].round(0).astype(int)
 
+    return yearly_overview
+
+def display_table(mode='Revenue', year=2022, owner='all'):
+    '''Displays the table colored as an image'''
+    df = create_yearly_overview(mode, year, owner)
 
     if mode == 'Revenue':
-        thresholds=revenue_threshold() #Extracting revenue averages
+        thresholds=revenue_threshold()
         color_criteria = rev_color_grid(df, thresholds)
     elif mode == 'Occupancy':
         color_criteria = occ_color_grid(df)
@@ -108,10 +113,10 @@ def display_table(mode='Revenue', year=2022, owner='all'):
 
     # Create custom legend patches
     legend_elements = [
-        Patch(color=colors_list[0], label=f"More than 20% over threshold"),
+        Patch(color=colors_list[0], label=f"Inferieur au loyer de base"),
         Patch(color=colors_list[1], label="NA - No data"),
-        Patch(color=colors_list[2], label=f"Around threshold"),
-        Patch(color=colors_list[3], label=f"More than 20% threshold")
+        Patch(color=colors_list[2], label=f"Autour du loyer de base"),
+        Patch(color=colors_list[3], label=f"Plus de 30% superieur au loyer de base")
         ]
     # Add the legend below the table
     ax.legend(handles=legend_elements, loc="upper center", bbox_to_anchor=(0.5, -0.05), ncol=2)

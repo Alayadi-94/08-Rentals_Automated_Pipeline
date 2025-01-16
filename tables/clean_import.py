@@ -22,7 +22,7 @@ def revenue_threshold():
     thresholds = pd.DataFrame({
     'Apartment_code': ['Alia 22', 'Alia 36', 'Alia 37', 'Alia 41', 'Menara 12',
                   'Menara 15', 'Oumnia A2 17', 'Palmeraie B9 A1'],
-    'Threshold (EUR)': [i/10.35 for i in rents],
+    'Threshold (EUR)': [i/10.5 for i in rents],
     'Threshold (MAD)': rents}
     )
     thresholds = thresholds.set_index('Apartment_code')
