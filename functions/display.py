@@ -5,12 +5,10 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, BoundaryNorm
 from matplotlib.patches import Patch
 
-from functions.pivots import create_pivot
-from tables.clean_import import revenue_threshold
+from tables.clean_import import revenue_threshold, get_pivot, get_perf_table
 
 def rev_color_grid(df, thresholds):
-    # Dictionary containing the name, row in thresholdsmeans_.iterrows()}
-
+    '''Returns a color grid for the revenue analysis'''
     # Dictionary to store the coloring criteria
     color_criteria = np.zeros_like(df, dtype=float)
 
@@ -35,8 +33,7 @@ def rev_color_grid(df, thresholds):
     return color_criteria
 
 def occ_color_grid(df):
-    # Dictionary containing the name, row in thresholdsmeans_.iterrows()}
-
+    '''Returns a color grid for the occupancy analysis'''
     # Dictionary to store the coloring criteria
     color_criteria = np.zeros_like(df, dtype=float)
 
@@ -60,13 +57,12 @@ def occ_color_grid(df):
 
     return color_criteria
 
-
-def display_table(full_df, mode='Revenue', year=2022, owner='all'):
-
+def display_table(mode='Revenue', year=2022, owner='all'):
+    '''Displays the table colored as an image'''
     if (owner=='Mohamed') | (owner=='Mounia'):
         full_df = full_df[full_df['Owner']==owner]
 
-    full_pivot = create_pivot(full_df, pivot_type = mode)
+    full_pivot = get_pivot(pivot_type = mode)
 
     #Select only data for the selected year
     selected_time_range = full_pivot.columns[full_pivot.columns.year == year]
@@ -122,6 +118,81 @@ def display_table(full_df, mode='Revenue', year=2022, owner='all'):
 
     # Set title and adjust layout
     ax.set_title("Overview of the year")
+    plt.tight_layout()
+    plt.show()
+
+    print(im)
+
+    return 0
+
+def perf_color_grid(df):
+    '''Returns a color grid for the performance analysis'''
+    color_criteria = np.zeros_like(df, dtype=float)
+
+    for j, n in enumerate(df.columns):
+        if n == 'Real_Earnings':
+            for i in range(len(df)):
+                value = df.iloc[i, j]
+                if value < 0:
+                    color_criteria[i, j]=-2
+                elif value > 0:
+                    color_criteria[i, j]=2
+        elif n == 'Performance (%)':
+            for i in range(len(df)):
+                value = df.iloc[i, j]
+                if value < 0:
+                    color_criteria[i, j]=-2
+                elif value > 0 and value < 30:
+                    color_criteria[i, j]=1
+                elif value > 30:
+                    color_criteria[i, j]=2
+
+    return color_criteria
+
+def display_perf():
+    '''Displays the overall performance table'''
+    df=get_perf_table()
+    color_criteria = perf_color_grid(df)
+    # Define custom colors: Red, Grey, Yellow, Green
+    colors_list = ["#E52916", "#dfe6e9", "#F1C40F", "#27AE60"]
+    custom_colors = ListedColormap(colors_list)
+
+
+    # Define boundaries for color mapping: -2, 0, 1, 2
+    boundaries = [-2.5, -0.5, 0.5, 1.5, 2.5]  # The boundaries define where each color will start and end
+
+    # Use BoundaryNorm to map the values (-2, 0, 1, 2) to the colors
+    norm = BoundaryNorm(boundaries, custom_colors.N)
+
+    # Display the DataFrame using imshow with custom colors
+    fig, ax = plt.subplots(figsize=(6, 5))
+    im = ax.imshow(color_criteria, cmap=custom_colors, norm=norm, aspect="auto")
+
+    # Add text annotations for each cell
+    for i in range(len(df)):
+        for j in range(len(df.columns)):
+            cell_value = df.iloc[i, j]
+            ax.text(j, i, cell_value, ha="center", va="center", color="black")
+
+
+    # Customize x-ticks and y-ticks
+    ax.set_xticks(np.arange(len(df.columns)))
+    ax.set_xticklabels(df.columns, rotation=45, ha="left", weight="bold")  # Rotate x-ticks
+    ax.tick_params(axis="x", top=True, labeltop=True, bottom=False, labelbottom=False)  # Move x-ticks to the top
+    ax.set_yticks(np.arange(len(df.index)))
+    ax.set_yticklabels(df.index, weight="bold")  # Make y-ticks smaller
+
+    # Create custom legend patches
+    legend_elements = [
+        Patch(color=colors_list[0], label=f"Negative performance"),
+        Patch(color=colors_list[2], label=f"Average performance"),
+        Patch(color=colors_list[3], label=f"Good performance")
+        ]
+    # Add the legend below the table
+    ax.legend(handles=legend_elements, loc="upper center", bbox_to_anchor=(0.5, -0.05), ncol=2)
+
+    # Set title and adjust layout
+    ax.set_title("Overall performance")
     plt.tight_layout()
     plt.show()
 
