@@ -154,9 +154,8 @@ def perf_color_grid(df):
 
     return color_criteria
 
-def display_perf():
+def display_perf(df):
     '''Displays the overall performance table'''
-    df=get_perf_table()
     color_criteria = perf_color_grid(df)
     # Define custom colors: Red, Grey, Yellow, Green
     colors_list = ["#E52916", "#dfe6e9", "#F1C40F", "#27AE60"]

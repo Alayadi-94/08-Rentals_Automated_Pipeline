@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 def get_table():
     '''Returns raw data'''
@@ -83,3 +84,25 @@ def get_perf_table():
     analysis_table.drop(index=['Menara 12', 'Palmeraie B9 A1'], inplace=True)
     analysis_table = analysis_table.astype(int)
     return analysis_table
+
+def create_overview():
+    '''creates an overview yearly'''
+    thresholds = revenue_threshold().drop(index=['Palmeraie B9 A1','Menara 12'])
+    thres = np.array(thresholds['Threshold (EUR)'].to_list())
+    pivot = get_pivot(pivot_type = 'Revenue')
+    pivot = pivot.drop(columns=['2024-09', '2024-10', '2024-11', '2024-12'], index=['Palmeraie B9 A1','Menara 12' ])
+
+    data = {}
+    for year in [2022, 2023, 2024]:
+        selected_range = pivot.columns[pivot.columns.year == year]
+        months = np.array((pivot[selected_range] != 0).sum(axis=1).to_list())
+        rev = np.array(pivot[selected_range].sum(axis=1).to_list())
+        performance = np.nan_to_num(np.divide(rev - (months * thres), (months * thres))*100, nan = 0)
+
+        data[(str(year), '# of months')] = months.tolist()
+        data[(str(year), 'Total revenue')] = rev.tolist()
+        data[(str(year), 'Performance (%)')] = performance.tolist()
+
+        # Create a DataFrame from the results
+    data_df = pd.DataFrame(data, index = thresholds.index).astype(int)
+    return data_df
