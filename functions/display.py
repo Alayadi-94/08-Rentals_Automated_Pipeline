@@ -2,8 +2,11 @@ import pandas as pd
 import numpy as np
 import calendar
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import plotly.express as px
 from matplotlib.colors import ListedColormap, BoundaryNorm
 from matplotlib.patches import Patch
+
 
 from tables.clean_import import revenue_threshold, get_pivot, get_perf_table
 
@@ -59,10 +62,7 @@ def occ_color_grid(df):
 
 def create_yearly_overview(mode='Revenue', year=2022, owner='all'):
     '''Creates yearly overvew'''
-    if (owner=='Mohamed') | (owner=='Mounia'):
-        full_df = full_df[full_df['Owner']==owner]
-
-    full_pivot = get_pivot(pivot_type = mode)
+    full_pivot = get_pivot(pivot_type = mode, owner=owner)
 
     #Select only data for the selected year
     selected_time_range = full_pivot.columns[full_pivot.columns.year == year]
@@ -203,3 +203,59 @@ def display_perf(df):
     print(im)
 
     return 0
+
+def plot_revenue(apartment_code):
+    '''plot overall revenue'''
+
+    # Create a pandas Series with text indices
+    pivot = get_pivot().drop(columns=['2024-09', '2024-10', '2024-11', '2024-12'])
+    series = pivot.loc[apartment_code][pivot.loc[apartment_code] != 0]
+    index = list(series.index.astype(str))
+    curve = pd.Series(list(series), index=index)
+
+    # Define the dotted line (constant value)
+    dotted_line = revenue_threshold().loc[apartment_code]['Threshold (EUR)']
+
+    # Create the figure
+    fig = go.Figure()
+
+    # Add the curve
+    fig.add_trace(go.Scatter(
+        x=curve.index, y=curve,
+        mode='lines',
+        name='AirBnB Revenue',
+        line=dict(color='blue', width=2)
+    ))
+
+    # Add the dotted line
+    fig.add_trace(go.Scatter(
+        x=curve.index, y=[dotted_line] * len(curve),
+        mode='lines',
+        name='Baseline',
+        fill='tonexty',
+        fillcolor='rgba(255, 0, 0, 0.2)',
+        line=dict(color='black', width=2, dash='dot')
+    ))
+
+    # Customize the layout
+    fig.update_layout(
+        title='Revenue overview',
+        xaxis_title='Index',
+        yaxis_title='Values',
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
+    )
+
+    # Show the figure
+    #fig.show()
+    return fig
+
+
+def plot_area(year=2022):
+    selcted_columns = get_pivot().columns[get_pivot().columns.year==year]
+    pivot = get_pivot()[selcted_columns]
+    pivot.reset_index(inplace=True)
+    pivot.rename_axis(None, axis=1, inplace=True)
+    df = pivot.melt(id_vars=['Apartment_code'], var_name='Month', value_name='Revenue')
+    df.Month = df.Month.astype(str)
+    fig = px.area(df, x="Month", y="Revenue", color='Apartment_code')
+    return fig

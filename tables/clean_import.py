@@ -6,10 +6,12 @@ def get_table():
     cleaned_df = pd.read_csv('data/historic_data_cleaned.csv')
     return cleaned_df
 
-def get_cleaned_table():
+def get_cleaned_table(owner='all'):
     '''Returns the cleaned historical data without cleaning fee and commition'''
 
     cleaned_df = get_table()
+    if (owner=='Mohamed') | (owner=='Mounia'):
+        cleaned_df = cleaned_df[cleaned_df['Owner']==owner]
     cleaned_df['Revenue'] = cleaned_df.apply(
         lambda row: (row.Revenue - 50) if row.Apartment_code in ["Oumnia A2 17", "Palmeraie B9 A1"]
         else (row.Revenue - 20), axis=1)
@@ -29,9 +31,9 @@ def revenue_threshold():
     thresholds = thresholds.set_index('Apartment_code')
     return thresholds
 
-def get_pivot(pivot_type = 'Revenue'):
+def get_pivot(pivot_type = 'Revenue', owner='all'):
     '''Creates a pivot table based on the full dataset'''
-    df=get_cleaned_table()
+    df=get_cleaned_table(owner=owner)
 
     if pivot_type == 'Occupancy':
         mode = 'count'
